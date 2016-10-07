@@ -1,0 +1,473 @@
+<html>
+  <head>
+      <title>Partida Truco - {{ user.username }}</title>
+      <link rel='stylesheet' type='text/css' href="{{ STATIC_URL }}shift.css" />
+      <link rel='stylesheet' type='text/css' href="{{ STATIC_URL }}mesatres.css" />
+  </head>
+
+<!--	<script src="jquery-1.11.1.js">-->
+<!--        $("body").load($(location).attr('pathname body'));-->
+  <script>
+      setTimeout(function(){window.location.reload(1);}, 30000);
+  </script>
+  <body>
+
+
+  <div class="mesa-base">
+      <div class="estado-mesa">
+          <h2>En la mesa
+               {{ partido.nombre }}</h2>
+          {% if partido.esperando %}
+              <h3>Esperando jugadores</h3>
+        {% elif abandonaron %}
+            <h3>Abandonaron la partida</h3>
+          {% endif %}
+      </div>
+    {% if partido.esperando or abandonaron %}
+      <a href="abandonar{{ide}}" class="botonimportante">Abandonar</a>
+    {% else %}
+      {% if partido.terminado %}
+      <!-- HAY GANADOR!! -->
+        <a href="abandonar{{ide}}" class="botonimportante">Abandonar</a>
+        <h2>{{print_estado}}</h2>
+      {% else %}
+      <table class="tg">
+        <tr>
+          <th class="tg-031e">
+          </th>
+          <th class="tg-031e">
+              <table class="tg">
+                <tr>
+                  <th class="tg-031e">
+                      <img src="static/equipo1abajo.png" height="30"/>
+                  </th>
+                  <th class="tg-031e">
+                      <h1 class="nombre">{{ jugador6.usuario.username }}</h1>
+                  </th>
+                  <th class="tg-031e">
+                      {% if   ronda.quienjuega == 6 %}
+                          <img src="static/turn.png" height="30"/>
+                      {% endif %}
+                  </th>
+                  </tr>
+              </table>
+
+          </th>
+          <th class="tg-031e">
+              <table class="tg">
+                <tr>
+                  <th class="tg-031e">
+                      <img src="static/equipo2abajo.png" height="30"/>
+                  </th>
+                  <th class="tg-031e">
+                      <h1 class="nombre">{{ jugador5.usuario.username }}</h1>
+                  </th>
+                  <th class="tg-031e">
+                      {% if   ronda.quienjuega == 5 %}
+                          <img src="static/turn.png" height="30"/>
+                      {% endif %}
+                  </th>
+                  </tr>
+              </table>
+          </th>
+          <th class="tg-031e">
+              <table class="tg">
+                <tr>
+                  <th class="tg-031e">
+                      <img src="static/equipo1abajo.png" height="30"/>
+                  </th>
+                  <th class="tg-031e">
+                      <h1 class="nombre">{{ jugador4.usuario.username }}</h1>
+                  </th>
+                  <th class="tg-031e">
+                      {% if ronda.quienjuega == 4 %}
+                          <img src="static/turn.png" height="30"/>
+                      {% endif %}
+                  </th>
+                  </tr>
+              </table>
+          </th>
+          <th class="tg-031e">
+
+          </th>
+          <th class="tg-031e">
+              <center>
+                  <div class="puntos">
+                    {% if not partido.esperando %}
+                      <h2 class="estado-mesa">Equipo 1</h2>
+                      <h3 class="puntaje">{{ partido.puntaje1 }}</h3>
+                    {% endif %}
+                  </div>
+              </center>
+          </th>
+          <th class="tg-031e">
+          <center>
+              <div class="puntos">
+                {% if not partido.esperando %}
+                  <h2 class="estado-mesa">Equipo 2</h2>
+                  <h3 class="puntaje">{{ partido.puntaje2 }}</h3>
+                {% endif %}
+              </div>
+          </center>
+
+          </th>
+        </tr>
+        <tr>
+          <td class="tg-031e"></td>
+          <td class="tg-031e">
+              {% if 6 == numero_p %}
+                  {% for Carta in cartas6 %}
+                      <a href="mesa{{ide}}/{{Carta.ide}}">
+                      <img src="{{Carta.imagen}}" height="130"/>
+                  {% endfor %}
+              {% else %}
+                  {% for Carta in cartas6 %}
+                      <a href="mesa{{ide}}/{{Carta.ide}}">
+                      <img src="/static/cartaatras.png" height="130" />
+                  {% endfor %}
+              {% endif %}
+          </td>
+          <td class="tg-031e"  width="300" height=154>
+              <div class="cartas-notiradas">
+                  {% if 5 == numero_p %}
+                      {% for Carta in cartas5 %}
+                          <a href="mesa{{ide}}/{{Carta.ide}}">
+                          <img src="{{Carta.imagen}}" height="130"/>
+                      {% endfor %}
+                  {% else %}
+                      {% for Carta in cartas5 %}
+                          <a href="mesa{{ide}}/{{Carta.ide}}">
+                          <img src="/static/cartaatras.png" height="130" />
+                      {% endfor %}
+                  {% endif %}
+                  </div>
+          </td>
+          <td class="tg-031e" width=300 height=154>
+              <div class="cartas-notiradas">
+                  {% if 4 == numero_p %}
+                      {% for Carta in cartas4 %}
+                          <a href="mesa{{ide}}/{{Carta.ide}}">
+                          <img src="{{Carta.imagen}}" height="130"/>
+                      {% endfor %}
+                  {% else %}
+                      {% for Carta in cartas4 %}
+                          <img src="/static/cartaatras.png" height="130" />
+                      {% endfor %}
+                  {% endif %}
+              </div>
+          </td>
+          <td class="tg-031e"></td>
+          <td class="tg-031e" width=296>
+              <div class="estado-mesa"><h1>{{print_estado}}</h1></div>
+
+                      {% if boton_puntos %}
+                          <table class="tabla-puntos">
+                            <tr>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/0" class="botonpuntos">0</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/1" class="botonpuntos">1</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/2" class="botonpuntos">2</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/3" class="botonpuntos">3</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/4" class="botonpuntos">4</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/5" class="botonpuntos">5</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/6" class="botonpuntos">6</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/7" class="botonpuntos">7</a>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/20" class="botonpuntos">20</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/21" class="botonpuntos">21</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/22" class="botonpuntos">22</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/23" class="botonpuntos">23</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/24" class="botonpuntos">24</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/25" class="botonpuntos">25</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/26" class="botonpuntos">26</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/27" class="botonpuntos">27</a>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/28" class="botonpuntos">28</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/29" class="botonpuntos">29</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/30" class="botonpuntos">30</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/31" class="botonpuntos">31</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/32" class="botonpuntos">32</a>
+                              </td>
+                              <td class="celda_puntos">
+                                  <a href="mesa{{ide}}/cantar/33" class="botonpuntos">33</a>
+                              </td>
+                              <!-- TODO aca va algo con if para mostrar o no el boton "son buenas"-->
+                              <!-- TODO "colspan=N" sirve para unir N celdas de la fila -->
+                              <td colspan="2" class="celda_puntos_sonbuenas">
+                                  <a href="mesa{{ide}}/envido/son_buenas" class="botonpuntos_sonbuenas">Buenas</a>
+                              </td>
+                            </tr>
+  <!--TODO terminan botones puntos envido-->
+                          </table>
+                      {% endif %}
+
+          </td>
+          <td class="tg-031e"></td>
+        </tr>
+        <tr>
+          <td class="tg-031e"></td>
+          <td class="tg-031e" width=300 height=90>
+              <center>
+                  {% for Carta in cartas_jugadas6 %}
+                     <img class="carta6_{{Carta.tirada_en_vuelta}}" src="{{Carta.imagen}}" height="80"/>
+                  {% endfor %}
+              </center>
+          </td>
+          <td class="tg-031e"  width=300 height=90>
+              <center>
+                  {% for Carta in cartas_jugadas5 %}
+                     <img class="carta5_{{Carta.tirada_en_vuelta}}" src="{{Carta.imagen}}" height="80"/>
+                  {% endfor %}
+              </center>
+          </td>
+          <td class="tg-031e"  width=300 height=90>
+              <center>
+                  {% for Carta in cartas_jugadas4 %}
+                     <img class="carta4_{{Carta.tirada_en_vuelta}}" src="{{Carta.imagen}}" height="80"/>
+                  {% endfor %}
+              </center>
+          </td>
+          <td class="tg-031e"></td>
+          <td class="tg-031e"></td>
+          <td class="tg-031e"></td>
+        </tr>
+        <tr>
+          <td class="tg-031e"></td>
+          <td class="tg-031e" width=300 height=90>
+              <center>
+                  {% for Carta in cartas_jugadas1 %}
+                     <img class="carta1_{{Carta.tirada_en_vuelta}}" src="{{Carta.imagen}}" height="80"/>
+                  {% endfor %}
+              </center>
+          </td>
+          <td class="tg-031e" width=300 height=90>
+              <center>
+                  {% for Carta in cartas_jugadas2 %}
+                     <img class="carta2_{{Carta.tirada_en_vuelta}}" src="{{Carta.imagen}}" height="80"/>
+                  {% endfor %}
+              </center>
+          </td>
+          <td class="tg-031e"  width=300 height=90>
+              <center>
+                  {% for Carta in cartas_jugadas3 %}
+                     <img class="carta3_{{Carta.tirada_en_vuelta}}" src="{{Carta.imagen}}" height="80"/>
+                  {% endfor %}
+              </center>
+          </td>
+          <td class="tg-031e"></td>
+          <td class="tg-031e">
+
+              <div class="link-opciones">
+                  <ul>
+                      {% if not partido.esperando and boton_quiero_envido %}
+                      <li>    <a href="mesa{{ide}}/envido/quiero" class="botonpartido">Quiero</a></li>
+                      <li>    <a href="mesa{{ide}}/envido/noquiero" class="botonpartido">No Quiero</a></li>
+                      {% endif %}
+                    {% if not partido.esperando and boton_quiero_truco %}
+                      <li>    <a href="mesa{{ide}}/truco/quiero" class="botonpartido">Quiero</a></li>
+                      <li>    <a href="mesa{{ide}}/truco/noquiero" class="botonpartido">No quiero</a></li>
+                   {% endif %}
+                  </ul>
+              </div>
+          </td>
+          <td class="tg-031e"></td>
+        </tr>
+        <tr>
+          <td class="tg-031e"></td>
+          <td class="tg-031e">
+              <div class="cartas-notiradas">
+                  {% if 1 == numero_p %}
+                      {% for Carta in cartas1 %}
+                          <a href="mesa{{ide}}/{{Carta.ide}}">
+                          <img src="{{Carta.imagen}}" height="130"/>
+                      {% endfor %}
+                  {% else %}
+                      {% for Carta in cartas1 %}
+                          <a href="mesa{{ide}}/{{Carta.ide}}">
+                          <img src="/static/cartaatras.png" height="130" />
+                      {% endfor %}
+                  {% endif %}
+              </div>
+          </td>
+          <td class="tg-031e" width=300 height=154 >
+              <div class="cartas-notiradas">
+                  {% if 2 == numero_p %}
+                      {% for Carta in cartas2 %}
+                          <a href="mesa{{ide}}/{{Carta.ide}}">
+                          <img src="{{Carta.imagen}}" height="130"/>
+                      {% endfor %}
+                  {% else %}
+                      {% for Carta in cartas2 %}
+                          <a href="mesa{{ide}}/{{Carta.ide}}">
+                          <img src="/static/cartaatras.png" height="130" />
+                      {% endfor %}
+                  {% endif %}
+              </div>
+          </td>
+          <td class="tg-031e">
+              <div class="cartas-notiradas">
+                  {% if 3 == numero_p %}
+                      {% for Carta in cartas3 %}
+                          <a href="mesa{{ide}}/{{Carta.ide}}">
+                          <img src="{{Carta.imagen}}" height="130"/>
+                      {% endfor %}
+                  {% else %}
+                      {% for Carta in cartas3 %}
+                          <img src="/static/cartaatras.png" height="130" />
+
+                      {% endfor %}
+                  {% endif %}
+              </div>
+          </td>
+          <td class="tg-031e"></td>
+          <td class="tg-031e" rowspan="2">
+              <!-- interesante -->
+          <center>
+              <ul>
+                    {% if envido %}
+                      <li>
+                        <a href="mesa{{ide}}/envido/envido" class="botonpartido">Envido</a>
+                      </li>
+                    {% endif %}
+                    {% if realenvido %}
+                      <li>
+                        <a href="mesa{{ide}}/envido/real_envido" class="botonpartido">Real Envido</a>
+                      </li>
+                    {% endif %}
+                    {% if faltaenvido %}
+                      <li>
+                        <a href="mesa{{ide}}/envido/falta_envido" class="botonpartido">Falta Envido</a>
+                      </li>
+                    {% endif %}
+                    {% if mostrar_puntos %}
+                      <li>
+                        <a href="mesa{{ide}}/envido/mostrar_puntos" class="boton_mostrar_puntos">Mostrar Puntos</a>
+                      </li>
+                    {% endif %}
+                    <!-- BOTONES TRUCO -->
+                    {% if truco %}
+                        <li><a href="mesa{{ide}}/truco" class="botonpartido">Truco</a></li>
+                    {% elif retruco %}
+                        <li><a href="mesa{{ide}}/truco/retruco" class="botonpartido">Retruco</a></li>
+                    {% elif vale_cuatro %}
+                      <li><a href="mesa{{ide}}/truco/vale_cuatro" class="botonpartido">Vale Cuatro</a></li>
+                    {% endif %}
+                    {% if not partido.esperando and ronda.quienjuega == jugador.numero %}
+                        <li>
+                          <a href="mesa{{ide}}/truco/mevoyalmazo" class="botonimportante">Me voy al mazo</a>
+                       </li>
+                    {% endif %}
+                    <!--  -->
+                    <li>
+                      <a href="abandonar{{ ide }}" class="botonimportante">Abandonar</a>
+                    </li>
+                </ul>
+            </center>
+          </td>
+          <td class="tg-031e"></td>
+        </tr>
+        <tr>
+          <td class="tg-031e"></td>
+          <td class="tg-031e">
+              <table class="tg">
+                <tr>
+                  <th class="tg-031e">
+                      <img src="static/equipo2.png" height="30"/>
+                  </th>
+                  <th class="tg-031e">
+                      <h1 class="nombre">{{ jugador1.usuario.username }}</h1>
+                  </th>
+                  <th class="tg-031e">
+                  {% if   ronda.quienjuega == jugador1.numero %}
+                      <img src="static/turn.png" height="30"/>
+                  {% endif %}
+                  </th>
+                </tr>
+              </table>
+          </td>
+          <td class="tg-031e">
+              <table class="tg">
+                <tr>
+                  <th class="tg-031e">
+                      <img src="static/equipo1.png" height="30"/>
+                  </th>
+                  <th class="tg-031e">
+                      <h1 class="nombre">{{ jugador2.usuario.username }}</h1>
+                  </th>
+                  <th class="tg-031e">
+                  {% if   ronda.quienjuega == jugador2.numero %}
+                      <img src="static/turn.png" height="30"/>
+                  {% endif %}
+                  </th>
+                </tr>
+              </table>
+          </td>
+
+          <td class="tg-031e">
+              <table class="tg">
+                <tr>
+                  <th class="tg-031e">
+                      <img src="static/equipo2.png" height="30"/>
+                  </th>
+                  <th class="tg-031e">
+                      <h1 class="nombre">{{ jugador3.usuario.username }}</h1>
+                  </th>
+                  <th class="tg-031e">
+                      {% if   ronda.quienjuega == jugador3.numero %}
+                          <img src="static/turn.png" height="30"/>
+                      {% endif %}
+                  </th>
+                  </tr>
+              </table>
+          </td>
+          <td class="tg-031e"></td>
+          <td class="tg-031e"></td>
+          <td class="tg-031e"></td>
+        </tr>
+           {% endif %}
+        {% endif %}
+  </div>
+  </body>
+</html>

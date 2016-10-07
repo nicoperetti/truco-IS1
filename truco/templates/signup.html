@@ -1,0 +1,50 @@
+ class="texto"{% extends 'base.html' %}
+{% block content %}
+ 
+
+    <head>
+        <title>Login</title>
+        <link rel='stylesheet' type='text/css' href="{{ STATIC_URL }}shift.css" />   
+        <link rel='stylesheet' type='text/css' href="{{ STATIC_URL }}signup.css" />      
+    </head>
+
+    <center>
+        {% if form.errors %}
+            <p>{{ form.errors }}</p>
+        {% endif %}
+    </center>
+    <form method="post" action="{% url 'signup' %}">
+ 
+        {% csrf_token %}
+ 
+        <table>
+            <tr>
+                <td class="texto">Nombre de Usuario:</td>
+                <td>{{ form.username }}</td>
+            </tr>
+            <tr>
+                <td class="texto"> Contraseña: </td>
+                <td>{{ form.password }}</td>
+            </tr>
+ 
+            <tr>
+                <td class="texto">email:</td>
+                <td>{{ form.email }}</td>
+            </tr>
+ 
+            <tr>
+                <td class="texto">Nombre:</td>
+                <td>{{ form.first_name }}</td>
+            </tr>
+ 
+            <tr>
+                <td class="texto">Apellido</td>
+                <td>{{ form.last_name }}</td>
+            </tr>
+ 
+        </table>
+
+        <input type="submit" class="boton" value="Sign Up"/>
+    </form>
+ 
+{% endblock %}

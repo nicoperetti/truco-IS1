@@ -1,0 +1,162 @@
+from django.db import models
+from django.contrib.auth.models import User
+from django.forms import ModelForm
+
+from constant import CARTAS, CARTAS_NEGRAS, IDE, VALOR, PALO, POWER
+
+class Carta(models.Model):
+    ide = models.PositiveIntegerField(primary_key=True)
+    palo = models.PositiveIntegerField()
+    valor = models.PositiveIntegerField()
+    power = models.PositiveIntegerField()
+    image = models.ImageField(upload_to = 'static/cards/')
+#    photo = models.ImageField(upload_to = get_upload_file_name,
+#                              storage = OverwriteStorage(),
+#                              default = os.path.join(settings.STATIC_ROOT,'images','generic_profile_photo.jpg'),
+#                              height_field = 'photo_height',
+#                              width_field = 'photo_width')
+#    photo_height = models.PositiveIntegerField(blank = True, default = 0)
+#    photo_width = models.PositiveIntegerField(blank = True, default = 0)
+
+    def __init__(self, ide):
+        super(Carta, self).__init__()
+        self.ide = CARTAS[ide][IDE]
+        self.valor = CARTAS[ide][VALOR]
+        self.palo = CARTAS[ide][PALO]
+        self.power = CARTAS[ide][POWER]
+
+class Jugador(models.Model):
+    usuario = models.ForeignKey(User, primary_key=True)
+    carta1 = models.ForeignKey(Carta, related_name='carta_1',null=True) 
+    carta2 = models.ForeignKey(Carta, related_name='carta_2',null=True) 
+    carta3 = models.ForeignKey(Carta, related_name='carta_3',null=True) 
+    carta1_jugada = models.BooleanField(default=False)
+    carta2_jugada = models.BooleanField(default=False)
+    carta3_jugada = models.BooleanField(default=False)
+#    puntos_envido = models.PositiveIntegerField(null=True)
+
+    def recibir_cartas(self, c1, c2, c3):
+        self.carta1 = Carta(c1)
+        self.carta2 = Carta(c2)
+        self.carta3 = Carta(c3)
+
+    def jugar_carta(self, carta):
+        if carta == 1:
+            assert not self.carta1_jugada
+            self.carta1_jugada = True
+        elif carta == 2:
+            assert not self.carta2_jugada
+            self.carta2_jugada = True
+        elif carta == 3:
+            assert not self.carta3_jugada
+            self.carta3_jugada = True
+        else:
+            assert False
+
+    def ver_cartas():
+        return [self.carta1, self.carta2, self.carta3]
+
+    def __str__(self):              # __unicode__ on Python 2
+        return self.usuario.get_username()
+
+
+class Ronda(models.Model):
+    jugador1 = models.ForeignKey(Jugador, related_name='jugador1')
+    jugador2 = models.ForeignKey(Jugador, related_name='jugador2')
+    truco_cantado = models.BooleanField(default=False)
+    envido_cantado = models.BooleanField(default=False)
+    puntos1 = models.PositiveIntegerField(blank=True)
+    puntos2 = models.PositiveIntegerField(blank=True)
+# TODO cuando se inicializa los jug se pasan en orden
+    # Cartas que se van jugando durante la ronda.
+    j1c1 = models.ForeignKey(Carta,related_name='j1c1',null=True,default=None)
+    j1c2 = models.ForeignKey(Carta,related_name='j1c2',null=True,default=None)
+    j1c3 = models.ForeignKey(Carta,related_name='j1c3',null=True,default=None)
+    j2c1 = models.ForeignKey(Carta,related_name='j2c1',null=True,default=None)
+    j2c2 = models.ForeignKey(Carta,related_name='j2c2',null=True,default=None)
+    j2c3 = models.ForeignKey(Carta,related_name='j2c3',null=True,default=None)
+    # 0 => jugador1, 1 => jugador2
+    quien_juega = models.PositiveIntegerField(default=0)
+    terminada = models.BooleanField(default=False)
+
+    def __init__(self, j1, j2, p1, p2):
+        super(Ronda, self).__init__()
+        # Se asume j1 es mano.
+        self.jugador1 = j1
+        self.jugador2 = j2
+        self.puntos1 = p1
+        self.puntos2 = p2
+
+    def reportar_puntaje (self) :
+        return [self.puntos1,self.puntos2]
+
+    def decidir_quien_juega(self):
+        if j1c1 is None:
+            self.quien_juega = 0
+        elif j2c1 is None:
+            self.quien_juega = 1
+        elif j1c2 is None:
+            self.quien_juega = 0
+        elif j2c2 is None:
+            self.quien_juega = 1
+        elif j1c3 is None:
+            self.quien_juega = 0
+        elif j2c3 is None:
+            self.quien_juega = 1
+        else:
+        # Si todas las cartas fueron jugadas (jNcN != None) la ronda termino.
+            assert self.terminada
+
+    def hacer_jugar(self):
+        if quien_juega == 0:
+            carta = self.jugador1.jugar()
+        else:
+            carta = self.jugador2.jugar()
+
+    def get_cartas(self):
+        return [self.jugador1.ver_cartas(), self.jugador2.ver_cartas()]
+
+class Partido(models.Model):
+    nombre = models.CharField(max_length = 50)
+    jugador1 = models.ForeignKey(Jugador, related_name='ronda_jugador1',null=True) #no cambiar related name
+    jugador2 = models.ForeignKey(Jugador, related_name='ronda_jugador2',null=True)
+    esperando = models.BooleanField(default=True)
+    puntaje1 = models.PositiveIntegerField(default=0)
+    puntaje2 = models.PositiveIntegerField(default=0)
+    ronda = models.ForeignKey(Ronda,null=True, blank=True)
+    numero_ronda = models.PositiveIntegerField(default=0)
+    terminado = models.BooleanField(default=False)
+
+
+    def estado(self):
+        if self.esperando:
+            return "Esperando jugador..."
+        else:
+            j1 = self.jugador1
+            j2 = self.jugador2
+            return "Partido entre "+j1+" y "+j2
+
+    def repartir(self) :
+        assert not self.esperando
+        assert not self.terminado
+        # TODO agregar opcion para jugar con 10
+#        if self.jugar_con_10:
+#            cartas = range(0,40)
+        cartas = range(0,36)
+        shuffle(cartas)
+        self.jugador1.recibir_cartas(cartas[0], cartas[1], cartas[2])
+        self.jugador2.recibir_cartas(cartas[3], cartas[4], cartas[5])
+
+    def nueva_ronda(self):
+        if self.numero_ronda % 2 == 0:
+            self.ronda = Ronda(self.jugador1, self.jugador2, 0 , 0)
+        else:
+            self.ronda = Ronda(self.jugador2, self.jugador1, 0 , 0)
+        self.numero_ronda += 1
+        self.ronda.save()
+
+    def __str__(self):              # __unicode__ on Python 2
+        return self.nombre
+
+
+

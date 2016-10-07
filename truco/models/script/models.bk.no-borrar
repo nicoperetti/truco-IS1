@@ -1,0 +1,881 @@
+from django.db import models
+from django.contrib.auth.models import User
+from django.forms import ModelForm
+from django.db.models import Min, Max
+from random import shuffle
+
+from.constant import *
+
+
+class Truco(models.Model):
+    ronda = models.ForeignKey('Ronda',related_name = 'truco_de_ronda')
+    # nivel actual de truco eg Retruco querido
+    nivel = models.PositiveIntegerField(default = NADA)
+    # siguiente nivel eg Vale cuatro
+    siguiente_nivel = models.PositiveIntegerField(default = NADA)
+    # Que equipo canto truco(int 1 o 2)
+    quien_canto = models.PositiveIntegerField(default = NINGUNO)
+    # Estados: inicial, esperando, aceptado, rechazado, calculado
+    estado = models.IntegerField(default = INICIAL)
+
+    def puede_cantar_truco(self, numero_equipo):
+        if self.quien_canto != numero_equipo and self.estado != RECHAZADO:
+            return True
+
+    def procesar_input(self, numero_equipo, accion):
+        if accion == "": # Se canta truco por primera vez
+            self.siguiente_nivel = TRUCO
+            print "cantamos truco"
+            self.quien_canto = numero_equipo
+            self.estado = ESPERANDO
+
+        elif accion == "retruco":
+            self.siguiente_nivel = RETRUCO
+            self.quien_canto = numero_equipo
+            self.estado = ESPERANDO
+
+        elif accion == "vale_cuatro":
+            self.siguiente_nivel = VALE_CUATRO
+            self.quien_canto = numero_equipo
+            self.estado = ESPERANDO
+
+        elif accion == "quiero":
+            self.nivel = self.siguiente_nivel
+            self.estado = ACEPTADO
+            print "lo quisimos"
+
+        elif accion == "noquiero":
+            self.estado = RECHAZADO
+
+        elif accion == "mevoyalmazo":
+            self.quien_canto = numero_equipo
+            self.estado = ME_VOY_AL_MAZO
+        self.save()
+        self.ronda.actualizar_puntajes()
+
+    def get_puntos_truco(self):
+        return self.nivel
+
+    def mostrar_boton_truco(self, numero_equipo):
+        ronda = self.ronda
+        boton_quiero_truco = self.quien_canto != numero_equipo and self.estado==ESPERANDO
+        if self.estado != ESPERANDO:
+            if self.siguiente_nivel == NADA and ronda.quienjuega == numero_equipo:
+                result = {'truco':True,'retruco':False,'vale_cuatro':False,'boton_quiero_truco':boton_quiero_truco}
+            elif self.siguiente_nivel == TRUCO and self.quien_canto!=numero_equipo:
+                result = {'truco':False,'retruco':True,'vale_cuatro':False,'boton_quiero_truco':boton_quiero_truco}
+            elif self.siguiente_nivel == RETRUCO and self.quien_canto!=numero_equipo:
+                result = {'truco':False,'retruco':False,'vale_cuatro':True,'boton_quiero_truco':boton_quiero_truco}
+            else:
+                result = {'truco':False,'retruco':False,'vale_cuatro':False,'boton_quiero_truco':boton_quiero_truco}
+        else:
+            result = {'truco':False,'retruco':( boton_quiero_truco and self.siguiente_nivel<3),'vale_cuatro':  ( boton_quiero_truco and self.siguiente_nivel<4),'boton_quiero_truco':boton_quiero_truco}
+        return result
+
+class Envido(models.Model):
+    ronda = models.ForeignKey('Ronda', related_name='envido_de_ronda')
+    nivel_envido =  models.PositiveIntegerField( default = SIN_ENVIDO )
+    nivel_old = models.PositiveIntegerField( default = SIN_ENVIDO )
+    estado_envido = models.IntegerField( default = INICIAL)
+    quien_canto = models.PositiveIntegerField( default = NINGUNO)
+
+    puntaje_mentiroso1 = models.PositiveIntegerField( default = -1) # equipo 1
+    puntaje_mentiroso2 = models.PositiveIntegerField( default = -1) # equipo 2
+
+    equipo_ganador = models.PositiveIntegerField( default = NINGUNO)
+
+    mostrar_puntos = models.BooleanField(default=True)
+
+    def get_estado_envido(self):
+        return self.estado_envido
+
+    def get_ganador(self):
+        return self.equipo_ganador
+
+    def verificar_input(self, accion): # verificamos que lo que se va a cantar se pueda cantar y no cantemos envido con el realenvido ya cantado
+        result = False
+        if accion == "quiero" or accion == "noquiero":
+            result = self.estado_envido == ESPERANDO
+        elif accion == "envido":
+            if self.nivel_envido in [SIN_ENVIDO, ENV]:
+                result = True
+        elif accion == "real_envido":
+            if self.nivel_envido in [SIN_ENVIDO, ENV, ENV2]:
+                result = True
+        elif accion == "falta_envido":
+            result = True
+        elif accion == "" and self.estado_envido == ACEPTADO: # cante puntos
+            result = True
+        elif accion == "son_buenas":
+            if self.estado_envido == ACEPTADO:
+                result = True
+        elif accion == "mostrar_puntos":
+            if self.estado_envido == CALCULADO:
+                result = True
+        else:
+            print "estas mal loco, accion no posible"
+            result = False
+        return result
+
+    def puede_cantar(self, numero_equipo):
+        result = False
+        if self.estado_envido == INICIAL:
+            result = True
+        elif self.estado_envido == ESPERANDO and self.quien_canto != numero_equipo:
+            result = True
+        elif self.estado_envido == ACEPTADO or self.estado_envido == CALCULADO:
+            result = True
+        return result
+
+    def procesar_input(self, accion, numero_equipo, puntos_para_falta, puntos):
+        self.quien_canto = numero_equipo
+        if accion == "quiero":
+            self.estado_envido = ACEPTADO
+        elif accion == "noquiero":
+            self.estado_envido = RECHAZADO
+            self.nivel_envido = self.nivel_old
+            if numero_equipo == EQUIPO1:
+                self.equipo_ganador = EQUIPO2
+            else:
+                self.equipo_ganador = EQUIPO1
+        elif accion == "envido":
+            self.nivel_old = self.nivel_envido
+            self.estado_envido = ESPERANDO
+            if self.nivel_envido == SIN_ENVIDO:
+                self.nivel_envido = ENV
+            elif self.nivel_envido == ENV:
+                self.nivel_envido = ENV2
+        elif accion == "real_envido":
+            self.estado_envido = ESPERANDO
+            self.nivel_old = self.nivel_envido
+            if self.nivel_envido == SIN_ENVIDO:
+                self.nivel_envido = REAL_ENV
+            elif self.nivel_envido == ENV:
+                self.nivel_envido = ENV_REAL_ENV
+            elif self.nivel_envido == ENV2:
+                self.nivel_envido = ENV2_REAL_ENV
+        elif accion == "falta_envido":
+            self.estado_envido = ESPERANDO
+            self.nivel_old = self.nivel_envido
+            self.nivel_envido = puntos_para_falta
+        elif accion == "": # cantar puntos: muy feo esta escrito esto merjorar jaj
+            print numero_equipo
+            if numero_equipo == EQUIPO1:
+                self.puntaje_mentiroso1 = puntos # cuando se adapte a varios jugadores voy guardando el max puntaje
+            if numero_equipo == EQUIPO2:
+                self.puntaje_mentiroso2 = puntos
+            if self.puntaje_mentiroso2 != -1 and self.puntaje_mentiroso1 != -1:
+                self.estado_envido = CALCULADO
+#                print "dasdsaddnfsfhcdhfhgsdsadhadsagdsa 1,,,,,,", self.puntaje_mentiroso1
+#                print "dasdsaddnfsfhcdhfhgsdsadhadsagdsa 2,,,,,,", self.puntaje_mentiroso2
+                asd1 = int(self.puntaje_mentiroso1)
+                asd2 = int(self.puntaje_mentiroso2)
+                if asd1 < asd2:
+#                    print "entre ganador 2"
+                    self.equipo_ganador = EQUIPO2
+                elif asd1 > asd2:
+#                    print "entre ganadar 1"
+                    self.equipo_ganador = EQUIPO1
+                else: # caso de tener mismos puntos, ver quien es mano
+                    ronda = self.ronda
+                    self.equipo_ganador = ronda.quien_es_mano # me dice quien es mano en la ronda
+        elif accion == "son_buenas":
+            if numero_equipo == EQUIPO1:
+                self.equipo_ganador = EQUIPO2
+            else:
+                self.equipo_ganador = EQUIPO1
+        elif accion == "mostrar_puntos":
+            self.mostrar_puntos = False
+        else:
+            print "estas mal loco, accion no posible"
+        self.save()
+
+    def get_puntos(self):
+        return self.nivel_envido
+
+    def mostrar_boton_envido(self,numero_equipo):
+        ronda = self.ronda
+        aux = ronda.quienjuega == numero_equipo
+        boton_quiero = self.quien_canto != numero_equipo and self.estado_envido==ESPERANDO
+        boton_puntos = self.quien_canto != numero_equipo and self.estado_envido == ACEPTADO
+        boton_mostrar_puntos = self.estado_envido == CALCULADO and self.mostrar_puntos
+        if self.estado_envido == INICIAL and aux:
+            result = {'envido':True,'realenvido':True,'faltaenvido':True,'boton_quiero_envido':boton_quiero, 'boton_puntos':False, 'mostrar_puntos': boton_mostrar_puntos}
+        elif self.estado_envido == ESPERANDO and self.quien_canto != numero_equipo:
+            if self.nivel_envido == SIN_ENVIDO or self.nivel_envido== ENV: # puedo mostrar todos los botones
+                result = {'envido':True,'realenvido':True,'faltaenvido':True,'boton_quiero_envido':boton_quiero, 'boton_puntos':False, 'mostrar_puntos': boton_mostrar_puntos}
+            elif self.nivel_envido == ENV2:
+                result = {'envido':False, 'realenvido':True, 'faltaenvido':True, 'boton_quiero_envido':boton_quiero, 'boton_puntos':False, 'mostrar_puntos': boton_mostrar_puntos}
+            elif self.nivel_envido == REAL_ENV or self.nivel_envido==ENV2_REAL_ENV:
+                result = {'envido':False, 'realenvido':False, 'faltaenvido':True, 'boton_quiero_envido':boton_quiero, 'boton_puntos':False, 'mostrar_puntos': boton_mostrar_puntos}
+            else: # falta envido
+                result = {'envido':False,'realenvido':False,'faltaenvido':False,'boton_quiero_envido':boton_quiero, 'boton_puntos':False, 'mostrar_puntos': boton_mostrar_puntos}
+        elif self.estado_envido == ACEPTADO:
+            result = {'envido':False,'realenvido':False,'faltaenvido':False,'boton_quiero_envido':False, 'boton_puntos':boton_puntos, 'mostrar_puntos': boton_mostrar_puntos}
+        else:
+            result = {'envido':False,'realenvido':False,'faltaenvido':False,'boton_quiero_envido':boton_quiero, 'boton_puntos':False, 'mostrar_puntos': boton_mostrar_puntos}
+        return result
+
+
+class Carta(models.Model):
+    jugador = models.ForeignKey('Jugador',related_name = 'cartas')
+    ronda = models.ForeignKey('Ronda',related_name = 'cartas_de_la_ronda')
+    ide = models.PositiveIntegerField(primary_key=True)
+    palo = models.PositiveIntegerField()
+    valor = models.PositiveIntegerField()
+    power = models.PositiveIntegerField()
+    jugada = models.BooleanField(default=False)
+    tirada_en_vuelta = models.PositiveIntegerField(default=0)
+    imagen = models.CharField(max_length=100, blank=True)
+
+    def get_jugador(self):
+        return self.jugador
+
+    def set_jugada(self, estado):
+        if not self.jugada:
+            self.jugada = True
+            self.tirada_en_vuelta = estado
+            self.save()
+
+    def set_image(self):
+        cadena = '/static/mazo/' + str(self.ide) + '.jpg'
+        self.imagen = cadena
+
+    def __unicode__(self):
+        return str(self.ide)
+
+class Jugador(models.Model):
+    usuario = models.OneToOneField(User, primary_key=True)
+    equipo = models.ForeignKey('Equipo', related_name='jugadores_del_equipo')
+    numero = models.PositiveIntegerField(default=0) 
+    puntos_cantados = models.IntegerField(default=-1)
+
+
+    def get_numero_jugador(self):
+        return self.numero
+
+    def get_numero_equipo(self):
+        return self.equipo.get_numero()
+
+    def jugar_carta(self, ide, ronda):
+        carta = self.cartas.filter(ide=ide)
+        carta = carta[0]
+        result = False
+        if not carta.jugada:
+            carta.set_jugada(ronda)
+            carta.save()
+            result = True
+        return result
+
+    def recibir_cartas(self, ron,a, b, c):
+        carta1 = Carta(jugador=self,ronda = ron, ide=CARTAS[a][IDE], palo=CARTAS[a][PALO], valor=CARTAS[a][VALOR], power=CARTAS[a][POWER], jugada=False)
+        carta1.set_image()
+        carta1.save()
+        carta2 = Carta(jugador=self,ronda = ron, ide=CARTAS[b][IDE], palo=CARTAS[b][PALO], valor=CARTAS[b][VALOR], power=CARTAS[b][POWER], jugada=False)
+        carta2.set_image()
+        carta2.save()
+        carta3 = Carta(jugador=self,ronda = ron, ide=CARTAS[c][IDE], palo=CARTAS[c][PALO], valor=CARTAS[c][VALOR], power=CARTAS[c][POWER], jugada=False)
+        carta3.set_image()
+        carta3.save()
+        # Puntos para el envido
+        cartas = [carta1, carta2, carta3]
+        pts = []
+        for i in range(0, len(cartas)):
+            # Calculo los puntos de las cartas individuales.
+            if cartas[i].valor not in CARTAS_NEGRAS:
+                vali = cartas[i].valor
+            else:
+                vali = 0
+            pts.append(vali)
+            for j in range(i + 1, len(cartas)):
+                # Calculo los puntos de los pares de cartas.
+                if cartas[i].palo == cartas[j].palo:
+                    if cartas[j].valor not in CARTAS_NEGRAS:
+                        valj = cartas[j].valor
+                    else:
+                        valj = 0
+                    pts.append(20 + vali + valj)
+        # puntos_envido = mayor de los puntajes (entre cartas y pares de cartas).
+        self.puntos_envido = max(pts)
+        self.save()
+
+    def __unicode__(self):              # __unicode__ on Python 2
+        return self.usuario.get_username()
+
+class Equipo(models.Model):
+    numero = models.IntegerField(default = 1)
+    cantidad_jugadores = models.IntegerField(default = 0)
+    total_de_jugadores = models.IntegerField(default = 1)
+    partido = models.ForeignKey('Partido',related_name = 'equipos')
+
+    def get_numero(self):
+        return self.numero
+
+
+    def crear_jugador(self,user,numero_jugador):
+        if self.cantidad_jugadores < self.total_de_jugadores:
+            jugadornuevo = Jugador(usuario = user, equipo = self ,numero = numero_jugador)
+            jugadornuevo.save()
+            self.cantidad_jugadores += 1
+            self.save()
+
+    def esta_lleno(self):
+        return self.cantidad_jugadores == self.total_de_jugadores
+
+    def obtener_jugadores(self ):
+        return self.jugadores_del_equipo.all()
+    def __unicode__(self):              # __unicode__ on Python 2
+        return str(self.numero)
+        
+class Ronda(models.Model):
+    partido = models.ForeignKey('Partido', related_name='ronda_de_partido')
+    maxjugadores = models.PositiveIntegerField(default = 0)
+    quienjuega = models.PositiveIntegerField(default=1)  # indica quien va a jugar
+    cantidad_cartas = models.PositiveIntegerField(default=0)  # indica cuantas cartas  se tiraron
+    estado = models.PositiveIntegerField(default=PRIMERA_VUELTA)  # 1 2 3 indica las suborndas
+    quien_es_mano = models.PositiveIntegerField( default=1 )
+    vuelta1 = models.IntegerField(default=-1) # quien gano cada subronda
+    vuelta2 = models.IntegerField(default=-1)
+    vuelta3 = models.IntegerField(default=-1)
+
+
+    def hacer_jugar(self, jugador, id_carta):
+        envido = self.envido_de_ronda.all()[0]
+        truco = self.truco_de_ronda.all()[0]
+         # si el jugador numero tal tiene que jugar
+         # NO se puede jugar si se esta esperando un quiero
+        if self.quienjuega == jugador.get_numero_jugador()\
+           and truco.estado != ESPERANDO and envido.estado_envido != ESPERANDO\
+           and id_carta != "": 
+            jugo = jugador.jugar_carta(id_carta, self.estado)
+            if jugo: # si efectivamente se jugo
+                self.cantidad_cartas += 1  # tiramos una carta
+                self.avanzar()
+                self.save()
+
+    def avanzar(self):
+        if self.cantidad_cartas % self.maxjugadores == 0:  # significa que podemos actualziar, ya han jugado todo los jugadores
+            estado = self.estado
+            self.actualizar_vuelta()
+            self.actualizar_puntajes()
+            self.estado += 1
+        else:  # sino podemos actualizar puntajes, entonces
+            self.quienjuega += 1
+            if self.quienjuega == self.maxjugadores + 1:
+                self.quienjuega = 1
+        self.save()
+
+
+    def encontrar_ganador(self):
+        cartas = self.cartas_de_la_ronda.filter(tirada_en_vuelta = self.estado)
+        minimo = cartas.aggregate(Min('power'))['power__min'] # obtenemos la carta mas poderosa
+        cartas = self.cartas_de_la_ronda.filter(tirada_en_vuelta = self.estado, power = minimo)
+        ganador = cartas[0].get_jugador().get_numero_equipo()
+        if len(cartas)>1:
+            for i in cartas:
+                if ganador != i.get_jugador().get_numero_equipo():
+                    ganador = 0
+                    break
+        return ganador
+
+    def actualizar_vuelta(self):
+        ganador = self.encontrar_ganador()
+        if self.estado == PRIMERA_VUELTA:
+            self.vuelta1 = ganador
+        if self.estado == SEGUNDA_VUELTA:
+            self.vuelta2 = ganador
+        if self.estado == TERCERA_VUELTA:
+            self.vuelta3 = ganador
+        if ganador != 0:
+            self.quienjuega = ganador
+        self.save()
+        return ganador
+
+    def buscar_puntaje(self, valor, palo):
+        result = 0
+        cero_uno = palo[0] == palo[1]
+        cero_dos = palo[0] == palo[2]
+        uno_dos = palo[1] == palo[2]
+
+        if not cero_uno and not cero_dos and not uno_dos:
+            result = max(valor)
+        elif cero_uno and not cero_dos:
+            result = 20 + valor[0] + valor [1]
+        elif cero_dos and not cero_uno:
+            result = 20 + valor[0] + valor [2]
+        elif uno_dos and not cero_uno:
+            result = 20 + valor[1] + valor[2]
+        else: # todos del mimo palo
+            comb = []
+            comb.append(valor[0] + valor[1])
+            comb.append(valor[0] + valor[2])
+            comb.append(valor[1] + valor[2])
+            result = 20 + max(comb)
+        return result
+
+    def computar_envido(self, partido):
+        envido = self.envido_de_ronda.all()[0]
+        puntos_envido = envido.get_puntos()
+        equipo_ganador_envido = envido.get_ganador()
+        if envido.mostrar_puntos == True: # quiere decir que no se ha solicitado que se muestren los puntos
+            if equipo_ganador_envido != NINGUNO:
+                if equipo_ganador_envido == EQUIPO1:
+                    partido.puntaje1 += puntos_envido
+                elif equipo_ganador_envido == EQUIPO2:
+                    partido.puntaje2 += puntos_envido
+        else: # para dos jugadores dsp rehacer para varios
+            equipos = partido.equipos.all()
+            jugadores_eq1 = equipos[0].jugadores_del_equipo.all()[0]
+            jugadores_eq2 = equipos[1].jugadores_del_equipo.all()[0]
+            cartas_eq1 = jugadores_eq1.cartas.all()
+            cartas_eq2 = jugadores_eq2.cartas.all()
+            valor_eq1 = []
+            palo_eq1 = []
+            valor_eq2 = []
+            palo_eq2 = []
+            for i in range(0,3):
+                palo_eq1.append(cartas_eq1[i].palo)
+                if cartas_eq1[i].valor not in CARTAS_NEGRAS:
+                    valor_eq1.append(cartas_eq1[i].valor)
+                else:
+                    valor_eq1.append(0)
+                palo_eq2.append(cartas_eq2[i].palo)
+                if cartas_eq2[i].valor not in CARTAS_NEGRAS:
+                    valor_eq2.append(cartas_eq2[i].valor)
+                else:
+                    valor_eq2.append(0)
+            puntos_eq1 = self.buscar_puntaje(valor_eq1, palo_eq1)
+            puntos_eq2 = self.buscar_puntaje(valor_eq2, palo_eq2)
+            if puntos_eq1 > puntos_eq2:
+                partido.puntaje1 += puntos_envido
+            elif puntos_eq1 < puntos_eq2:
+                partido.puntaje2 += puntos_envido
+            else: # gana la mano
+                equipo_mano = self.quien_es_mano
+                if equipo_mano == EQUIPO1:
+                    partido.puntaje1 += puntos_envido
+                else:
+                    partido.puntaje2 += puntos_envido
+
+    def actualizar_puntajes(self):
+        partido = self.partido
+        partido.ronda_muerta = True
+        truco = self.truco_de_ronda.all()[0]
+        puntos = truco.get_puntos_truco()
+
+        envido = self.envido_de_ronda.all()[0]
+        puntos_envido = envido.get_puntos()
+        equipo_ganador_envido = envido.get_ganador()
+
+        # habia una forma mas facil de escribir esto, estoy totalmente seguro de eso... fran p.
+        if self.vuelta1 == EQUIPO1 and self.vuelta2 == EQUIPO1 or \
+           self.vuelta1 == EQUIPO1 and self.vuelta3 == EQUIPO1 or \
+           self.vuelta2 == EQUIPO1 and self.vuelta3 == EQUIPO1:
+            partido.puntaje1 += puntos
+            self.computar_envido(partido)
+
+        elif self.vuelta1 == EQUIPO2 and self.vuelta2 == EQUIPO2 or \
+             self.vuelta1 == EQUIPO2 and self.vuelta3 == EQUIPO2 or \
+             self.vuelta2 == EQUIPO2 and self.vuelta3 == EQUIPO2:
+            partido.puntaje2 += puntos
+            self.computar_envido(partido)
+
+        # pardas en segunda
+        elif self.vuelta1 == EQUIPO1 and self.vuelta2 == PARDAS:
+
+            partido.puntaje1 += puntos
+
+            self.computar_envido(partido)
+
+        elif self.vuelta1 == EQUIPO2 and self.vuelta2 == PARDAS:
+            partido.puntaje2 += puntos
+
+            self.computar_envido(partido)
+        #tripe parda
+        elif self.vuelta1 == PARDAS and self.vuelta2 == PARDAS and self.vuelta3==PARDAS:
+            if self.quien_es_mano==EQUIPO1:
+                partido.puntaje1 += puntos
+            else:
+                partido.puntaje2 += puntos
+            self.computar_envido(partido)
+
+        #doble parda 
+        elif self.vuelta1 == PARDAS and self.vuelta2 == PARDAS:
+            if self.vuelta3 == EQUIPO1:
+                partido.puntaje1 += puntos
+                self.computar_envido(partido)
+
+            elif self.vuelta3 == EQUIPO2:
+                partido.puntaje2 += puntos
+                self.computar_envido(partido)
+
+            else:
+                partido.ronda_muerta = False
+                partido.save()
+
+        #pardas en primera vuelta
+        elif self.vuelta1 == PARDAS:
+            if self.vuelta2 == EQUIPO1:
+                partido.puntaje1 += puntos
+                self.computar_envido(partido)
+            elif self.vuelta2 == EQUIPO2:
+                partido.puntaje2 += puntos
+                self.computar_envido(partido)
+            else:
+                partido.ronda_muerta = False
+
+
+        else:
+            partido.ronda_muerta = False
+
+        # Truco no querido
+        if truco.estado ==ME_VOY_AL_MAZO:
+            if truco.quien_canto == EQUIPO1:
+                partido.puntaje2 += puntos
+            elif truco.quien_canto == EQUIPO2:
+                partido.puntaje1 += puntos
+            partido.ronda_muerta = True
+            self.computar_envido(partido)
+
+        if truco.estado == RECHAZADO:
+            if truco.quien_canto == EQUIPO1:
+                partido.puntaje1 += puntos
+            elif truco.quien_canto == EQUIPO2:
+                partido.puntaje2 += puntos
+            partido.ronda_muerta = True
+            self.computar_envido(partido)
+
+        self.save()
+        partido.save()
+
+    def cantar_truco(self, numero_equipo, accion):
+        truco = self.truco_de_ronda.all()[0]
+        puede = truco.puede_cantar_truco(numero_equipo)
+        if puede:
+            truco.procesar_input(numero_equipo, accion)
+
+    def cantar_envido(self, numero_equipo, accion, puntos_para_falta, puntos):
+        envido = self.envido_de_ronda.all()
+        envido = envido[0]
+        puede = envido.puede_cantar(numero_equipo)
+        print puede
+        if puede:
+            valido = envido.verificar_input(accion)
+            print valido
+            if valido:
+                envido.procesar_input(accion, numero_equipo, puntos_para_falta, puntos)
+                print "Puntos a jugar: ",envido.get_puntos()
+                print "puntos equipo 1: ", envido.puntaje_mentiroso1
+                print "puntos equipo 2: ", envido.puntaje_mentiroso2
+                print "equipo ganador: ", envido.equipo_ganador
+
+
+    def crear_truco_envido(self):
+        envido = Envido(ronda=self)
+        envido.save()
+        truco = Truco(ronda=self)
+        truco.save()
+        
+    def botones_truco(self,numero_equipo,numero_jugador):
+        truco = self.truco_de_ronda.all()
+        truco = truco[0]
+        return truco.mostrar_boton_truco(numero_equipo)
+
+    def botones_envido(self,numero_equipo,numero_jugador):
+        envido = self.envido_de_ronda.all()
+        envido = envido[0]
+        return envido.mostrar_boton_envido(numero_equipo)
+
+
+class Partido(models.Model):
+    ide = models.IntegerField(default = 0, primary_key=True)
+    nombre = models.CharField(max_length=50)
+    esperando = models.BooleanField(default=True)
+    puntaje1 = models.PositiveIntegerField(default=0)
+    puntaje2 = models.PositiveIntegerField(default=0)
+    numero_ronda = models.PositiveIntegerField(default=0)
+    terminado = models.BooleanField(default=False)
+    maxpuntos = models.PositiveIntegerField(default=5)
+    cantidad_jugadores = models.PositiveIntegerField(default = 0) # Cantidad de jugadores en el partido
+    maxjugadores = models.PositiveIntegerField(default=0) # Cantidad de jugadores maximo
+    ronda_muerta = models.BooleanField(default = True)
+
+#    def levantar_envido(self):
+#        ronda = self.ronda_de_partido.all()[0]
+#        print ronda
+#        print "sdasdasdsadsadsadsadas"
+#        res = ronda.computar_envido()
+#        puntos = res[0]
+#        equipo = res[1]
+#        if equipo == 1:
+#            self.puntaje1 += puntos
+#        elif equipo == 2:
+#            self.puntaje2 += puntos
+#        self.save()
+
+    def demonio_de_partido(self):
+        self.gano_alguien()
+        if self.ronda_muerta and not self.esperando and not self.terminado:
+            self.nueva_ronda()
+            self.repartir()
+        self.save()
+
+    def nueva_ronda(self):
+        proximomano = 1
+        if self.numero_ronda > 0:
+            self.terminar_ronda()
+        self.numero_ronda += 1
+        self.ronda = Ronda(partido=self, maxjugadores = self.maxjugadores ,quienjuega=self.numero_ronda % self.maxjugadores +1 ,quien_es_mano=(self.numero_ronda % 2) + 1)
+        self.ronda.save()
+        self.ronda.crear_truco_envido()
+        self.ronda_muerta = False
+        self.save()
+
+    def repartir(self):
+        assert not self.esperando
+        assert not self.terminado
+        assert not self.ronda_muerta
+
+        cartas = range(0, 36)
+        shuffle(cartas)
+        shuffle(cartas) # porque somos extremistas
+        players = self.obtener_todo_jugadores()
+        indice = 0
+        for i in players:
+            i.recibir_cartas(self.ronda_de_partido.all()[0],cartas[indice],cartas[indice+1],cartas[indice+2])
+            indice += 3
+        self.repartido = True
+        self.save()
+
+    def jugar_partido(self, user, carta):
+        jugador = Jugador.objects.get(usuario=user)
+        ronda = self.ronda_de_partido.all()[0]
+        envido = ronda.envido_de_ronda.all()[0]
+        if envido.get_estado_envido() in [INICIAL, CALCULADO]:
+            ronda.hacer_jugar(jugador, carta)
+
+    def unir_jugador(self,user):
+        if self.esperando:
+            equipos = self.equipos.all()
+            if len(equipos) == 0 :
+                can = int(self.maxjugadores)
+                equipo = Equipo(numero=1, cantidad_jugadores=0, total_de_jugadores = (can / 2), partido = self )
+                equipo.save()
+                equipo.crear_jugador(user,self.cantidad_jugadores + 1 )
+                self.cantidad_jugadores += 1
+            elif len(equipos) == 1:
+                equipo = equipos[0]
+                if not equipo.esta_lleno():
+                    equipo.crear_jugador(user,self.cantidad_jugadores + 1 )
+                    self.cantidad_jugadores += 1
+                else:
+                    can = int(self.maxjugadores)
+                    equipo = Equipo(numero=2, cantidad_jugadores=0, total_de_jugadores = (can / 2), partido = self )
+                    equipo.save()
+                    equipo.crear_jugador(user,self.cantidad_jugadores + 1 )
+                    self.cantidad_jugadores += 1
+            elif len(equipos) == 2:
+                try:
+                    self.equipos.get(numero_equipo = 2)
+                    if not equipo.esta_lleno():
+                        equipo.crear_jugador(user,self.cantidad_jugadores + 1 )
+                        self.cantidad_jugadores += 1
+                except Exception:
+                    pass
+        if self.cantidad_jugadores == self.maxjugadores:
+            self.esperando = False
+        self.save()
+
+    def abandonar(self, jugador):
+        self.terminado = True
+        self.cantidad_jugadores -= 1
+        self.save()
+
+    def obtener_todo_jugadores(self):
+        equipos = self.equipos.all()
+        result = []
+        for i in equipos:
+            result += i.obtener_jugadores()
+        return result
+
+    def levantar_rondas(self, ronda):
+        ronda.delete()
+        players = self.jugadores.all()  # ahora vamos las cartas de los jugadores
+        cartas_muertas = []
+        for i in players:
+            cartas_muertas += i.cartas.all()  # obtenemos todas las cartas muertas
+        for i in cartas_muertas:
+            i.delete()  # chau cartas zombies
+        self.save()
+
+    def terminar_ronda(self):
+        try:
+            ronda = self.ronda_de_partido.all()[0]
+            # assert ronda.esta_muerta()
+            self.levantar_rondas(ronda)
+            self.ronda_muerta = True
+            self.save()
+        except Exception:
+            pass
+
+#    def levantar_envido(self):
+#        ronda = self.ronda_de_partido.all()
+#        try:
+#            ronda = ronda[0]
+#            if ronda.hay_envido():
+#                ganador = ronda.procesar_envido()
+#                puntos = ronda.reportar_puntos_del_envido()
+#                if ganador == 1:
+#                    puntaje1 += puntos
+#                elif  ganador == 2 :
+#                    putaje2 += puntos
+#                self.gano_alguien()
+#        except Exception:
+#            pass # veremos que onda
+#        self.save()
+
+    def gano_alguien(self):
+        if self.maxpuntos <= self.puntaje1 or self.maxpuntos<= self.puntaje2:
+            self.terminado = True
+        self.save()
+
+    def manejar_truco(self, user, accion):
+        ronda = self.ronda_de_partido.all()[0]
+        numero_equipo = self.jugador_pertenece_equipo(user)
+        ronda.cantar_truco(numero_equipo, accion)
+
+    def jugador_pertenece_equipo(self, user):
+        jugador = Jugador.objects.get(usuario=user)
+        return jugador.get_numero_equipo()
+
+    def manejar_envido(self, user, accion, puntos): # puntos son los que se cantan pueden ser mentirosos
+        numero = self.jugador_pertenece_equipo(user)
+        ronda = self.ronda_de_partido.all()[0]
+        puntos_para_falta = self.maxpuntos - max(self.puntaje1, self.puntaje2)
+        ronda.cantar_envido(numero, accion, puntos_para_falta, puntos)
+        ronda.save()
+
+    def puntos_jugador(self, equipo):
+        if equipo == 1:
+            return self.puntaje1
+        return self.puntaje2
+
+    def obtener_datos_jugador(self , user):
+        jugador = Jugador.objects.get(usuario=user)
+        nombre = jugador.usuario.get_username()
+        cartas = jugador.cartas.filter(jugada=False)
+        cartas_jugadas = jugador.cartas.filter(jugada=True)
+        return {'jugador':jugador,'cartas1':cartas,'cartas_jugadas1':cartas_jugadas,'ide':str(self.ide)}
+
+    def obtener_datos_de_jugadores(self , user):
+        jugadores = self.obtener_todo_jugadores()
+        if len(jugadores)==2 and self.maxjugadores==2:
+            for i in jugadores:
+                if i.usuario !=  user:
+                    jugador = i
+            cartas = jugador.cartas.filter(jugada=False)
+            cartas_jugadas = jugador.cartas.filter(jugada=True)
+            return {'jugador2':jugador,'cartas2':cartas,'cartas_jugadas2':cartas_jugadas}
+        else:
+            pass # cuando tengamos ganas de poner los equipos
+   
+    def esta_esperando(self):
+        return self.esperando
+
+    def obtener_datos_del_partido(self, user):
+        # vevo
+        jugador = Jugador.objects.get(usuario=user)  
+        ronda = self.ronda_de_partido.all()
+        nequipo = jugador.get_numero_equipo()
+        jugadores = self.obtener_todo_jugadores()
+        nombre1=""
+        nombre2=""
+        if len(jugadores)>1:
+            if jugadores[0].numero ==1 :
+                nombre1 = jugadores[0].usuario.get_username()
+                nombre2 = jugadores[1].usuario.get_username()
+            else:
+                nombre2 = jugadores[0].usuario.get_username()
+                nombre1 = jugadores[1].usuario.get_username()
+        data = {}
+        print_estado = ""
+        envido_cantado = ""
+        if len(ronda) > 0:  # puede ser que el partido no tenga ninguna ronda
+            ronda = ronda[0]
+            data = ronda.botones_truco(jugador.get_numero_equipo(),jugador.get_numero_jugador())
+            res = ronda.botones_envido(jugador.get_numero_equipo(),jugador.get_numero_jugador())
+            data = dict(data.items() + res.items())
+            res = self.obtener_datos_jugador(user)
+            data = dict(data.items() + res.items())
+            print_estado = self.print_estado(user, data)
+            try:
+                res = self.obtener_datos_de_jugadores(user)
+                data = dict(data.items() + res.items()) #obtenemos los datos de otro jugador
+                envido = ronda.envido_de_ronda.all()[0]
+                envido_cantado = envido.get_estado_envido()
+            except Exception:
+                pass
+        data = dict(data.items() + {
+            'nombre_jugador1':nombre1,
+            'nombre_jugador2':nombre2,
+            'partido': self,
+            'ronda': ronda,
+            'ide': self.ide,
+            'abandonaron': (self.cantidad_jugadores < self.maxjugadores) and self.terminado and not self.esperando,
+            'envido_cantado': envido_cantado,
+            'print_estado':print_estado,
+            'puntaje1':self.puntaje1,
+            'puntaje2':self.puntaje2
+        }.items())
+        # print data ,"ultimo"
+        return data
+
+    def print_estado(self, user, dicc):
+        jugador = Jugador.objects.get(usuario=user)  
+        nequipo = jugador.get_numero_equipo()
+        ronda = self.ronda_de_partido.all()[0]
+        truco = ronda.truco_de_ronda.all()[0]
+        if nequipo == 1:
+            puntos_tuyos = self.puntaje1
+            puntos_otro = self.puntaje2
+        elif nequipo == 2:
+            puntos_tuyos = self.puntaje2
+            puntos_otro = self.puntaje1
+
+        if truco.estado == ESPERANDO and truco.quien_canto != nequipo:
+            if truco.siguiente_nivel == TRUCO and truco.nivel == NADA:
+                return "Te cantaron truco"
+            elif truco.siguiente_nivel == RETRUCO and truco.nivel == TRUCO:
+                return "Te cantaron retruco"
+            elif truco.siguiente_nivel == VALE_CUATRO and truco.nivel == RETRUCO:
+                return "Te cantaron vale cuatro"
+
+        elif truco.estado == ESPERANDO and truco.quien_canto == nequipo:
+            return "Esperando respuesta"
+
+        elif self.terminado and puntos_tuyos > puntos_otro:
+            return "Ganaste! Tus puntos: " + str(puntos_tuyos)+" "+ "Los del otro: "+str(puntos_otro)
+
+        elif self.terminado and puntos_tuyos < puntos_otro:
+            return "Te hicieron de goma! Tus puntos: " + str(puntos_tuyos)+" "+ "Los del otro: "+str(puntos_otro)
+
+        elif self.terminado and puntos_tuyos == puntos_otro:
+            return "Empate!"
+
+        # elif dicc["envido"]:
+        #     return "Te cantaron envido"
+
+        # elif(ronda.estado_envido == 3):
+        #     puntos_envido = jugador.puntos_envido
+        #     puntos_envido_otro = otrojugador.puntos_envido
+        #     print "Puntos tuyos:", puntos_envido, ", Puntos del otro:", puntos_envido_otro
+        #     return "Puntos tuyos:", puntos_envido, ", Puntos del otro:", puntos_envido_otro
+
+
+
+        else:
+            return ""
+
+    def __unicode__(self):
+        return self.nombre
+

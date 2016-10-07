@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+ 
+{% block content %}
+    <head>
+        <title>{% block head_title %}Truco-Default{% endblock %}</title>
+        <link rel='stylesheet' type='text/css' href="{{ STATIC_URL }}shift.css" />   
+        <link rel='stylesheet' type='text/css' href="{{ STATIC_URL }}main.css" />   
+    </head>
+    <center>
+    <a href="{% url 'signup' %}" class="boton">Registrarse</a>
+    <a href="{% url 'login' %}" class="boton">Ingresar</a>
+    </center>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+    <head>
+        <title>Sala de Juego - {{ user }}</title>
+        <link rel='stylesheet' type='text/css' href="{{ STATIC_URL }}shift.css" />   
+        <link rel='stylesheet' type='text/css' href="{{ STATIC_URL }}crearpartido.css" />      
+    </head>
+
+
+
+    <form method="post" action="{% url 'crearpartido' %}">
+                {% csrf_token %}
+                <table>
+                    <tr>
+                        <tr>
+                            <td class="texto">Nombre del Partido:</td>
+                            <td>{{ form.Nombre }}</td>
+                        </tr>
+                        <tr>
+                            <td class="texto">Puntaje:</td>
+                            <td>{{ form.Puntaje }}</td>
+                        </tr>
+                         <tr>
+                            <td class="texto">Cantidad de jugadores:</td>
+                            <td>{{ form.Cantidad_Jugadores }}</td>
+                        </tr>
+
+                    </tr>
+                    <center>
+                        {% if form.errors %}
+                            <p>Por Favor complete todos los campos</p>
+                        {% endif %}
+                    <center>
+                </table>
+                <input type="submit" class="boton" value="Crear Partido"/>
+                <td>{{ form.maxpuntos }}</td>
+            </div>
+        </form>
+{% endblock %} 
+

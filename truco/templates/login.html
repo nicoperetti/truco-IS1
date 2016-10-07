@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+ 
+
+
+{% block titulo %}Ingresa al sistema{% endblock %}
+{% block encabezado %} 
+	<h1>Ingresa</h1>
+{% endblock %}
+
+{% block content %}
+        <head>
+        <title>Login</title>
+        <link rel='stylesheet' type='text/css' href="{{ STATIC_URL }}shift.css" />   
+        <link rel='stylesheet' type='text/css' href="{{ STATIC_URL }}signup.css" />      
+        </head>
+
+
+    <center>
+        {% if form.errors %}
+            <p>Tu usuario o tu contraseña no es el correcto, por favor intenta de nuevo.</p>
+        {% endif %}
+    </center>
+    <form method="post" action="{% url 'django.contrib.auth.views.login' %}">
+        {% csrf_token %}
+        <table>
+            <tr>
+                <td class="texto">Nombre de Usuario:</td>
+                <td>{{ form.username }}</td>
+            </tr>
+            <tr>
+                <td class="texto">Contraseña:</td>
+                <td>{{ form.password }}</td>
+            </tr>
+        </table>
+ 
+        <input type="submit" class="boton" value="Ingresar"/> <input type="hidden" name="next" value="{{ next }}"/>
+    </form>
+ 
+{% endblock %}

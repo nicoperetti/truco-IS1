@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+<!--{% load staticfiles %} -->
+{% block content %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Sala de Juego - {{ user.username }}</title>
+        <link rel='stylesheet' type='text/css' href="{{ STATIC_URL }}shift.css" />   
+        <link rel='stylesheet' type='text/css' href="{{ STATIC_URL }}lobby.css" />
+    </head>
+
+    <script>
+        setTimeout(function(){window.location.reload(1);}, 15000);
+    </script>
+
+    <body>
+            <div class="opciones">
+                <a href="crearpartido" class="botonimportante">Nuevo Partido</a>
+                <a href="logout" class="botonimportante">Salir</a>
+            </div>
+        <table class="tg">
+        <tr>
+            <div class="tableta">
+            <th class="tg-031e"></th>
+            <th class="tg-031e"><h1  class="tableta">Nombre del Partido</h1></th>
+            <th class="tg-031e"><h1 class="tableta">Cantidad de jugadores</h1></th>
+            <th class="tg-031e"><h1 class="tableta">Jugadores registrados</h1></th>
+            <th class="tg-031e"><h1 class="tableta">Cantidad de puntos</h1></th>
+            <th class="tg-031e" width=300><a href="/estadistica" class="botonpartido">Estadistica</a></th>
+          </tr>
+      </div>
+        {% for Partido in partidos %}
+          <tr>
+            <th class="tg-031e" width=300><a href="/unirse{{ Partido.ide }}" class="botonpartido">Entrar</a></th>
+            <th class="tg-031e"><h1 class="tableta2">{{ Partido.nombre }}</h1></th>
+            <th class="tg-031e"><h1 class="tableta2">{{Partido.maxjugadores}}</h1></th>
+            <th class="tg-031e"><h1 class="tableta2">{{Partido.cantidad_jugadores}}</h1></th>
+            <th class="tg-031e"><h1 class="tableta2">{{Partido.maxpuntos}}</h1></th>
+          </tr>
+        {% endfor %}
+        </table>
+    </body>
+</html>
+
+    {% endblock %}

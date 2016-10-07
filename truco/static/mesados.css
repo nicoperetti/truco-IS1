@@ -1,0 +1,392 @@
+body {
+    background-image: url('fondo.png');
+    background-size: 100%;
+    text-align: center;
+}
+
+table {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+}
+.estado-mesa h3{
+	color:white;
+	line-height: 1;
+	font-family: sans-serif;
+	text-transform: uppercase;
+}
+
+img{
+        border-radius: 5px;
+}
+
+.estado-mesa h2{
+	font-size: 25;
+	color:white;
+	margin-top: 15px;
+	line-height: 1;
+	font-family: sans-serif;
+	text-transform: uppercase;
+	text-shadow:
+	0.5px 0.5px 0 #CCC,
+	1px 1px 0 #444,
+	2px 2px 0 #444,
+	3px 3px 0 #444,
+	4px 4px 0 #444; /* end of 4 level deep dark shadow */
+
+}
+
+.puntos h3{
+    color:white;
+    line-height: 1;
+    font-size: 30;
+
+    font-family: sans-serif;
+    text-transform: uppercase;
+    text-shadow:
+    0.5px 0.5px 0 #CCC,
+    1px 1px 0 #444,
+    2px 2px 0 #444,
+    3px 3px 0 #444,
+    4px 4px 0 #444;
+}
+
+.puntos h2{
+    font-size: 15;
+    color:white;
+    margin-top: 10px;
+    line-height: 1;
+    font-family: sans-serif;
+    text-transform: uppercase;
+    text-shadow:
+    0.5px 0.5px 0 #CCC,
+    1px 1px 0 #444,
+    2px 2px 0 #444,
+    3px 3px 0 #444,
+    4px 4px 0 #444; /* end of 4 level deep dark shadow */
+
+}
+
+ul {
+list-style-type: none;
+}
+
+li {
+margin: 0.1em 0;
+}
+
+.tg {
+    border-collapse:collapse;
+    border-spacing:0;
+}
+
+.tg td{
+    font-size:14px;
+    border-style:solid;
+    border-width:0px;
+    word-break:normal;
+}
+.tg th{
+    font-size:14px;
+    font-weight:normal;
+    border-style:solid;
+    border-width:0px;
+    word-break:normal;
+}
+.botonimportante {
+	-moz-box-shadow:inset 0px 1px 0px 0px #f29c93;
+	-webkit-box-shadow:inset 0px 1px 0px 0px #f29c93;
+	box-shadow:inset 0px 1px 0px 0px #f29c93;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #fe1a00), color-stop(1, #ce0100) );
+	background:-moz-linear-gradient( center top, #fe1a00 5%, #ce0100 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fe1a00', endColorstr='#ce0100');
+	background-color:#fe1a00;
+	-webkit-border-top-left-radius:11px;
+	-moz-border-radius-topleft:11px;
+	border-top-left-radius:11px;
+	-webkit-border-top-right-radius:11px;
+	-moz-border-radius-topright:11px;
+	border-top-right-radius:11px;
+	-webkit-border-bottom-right-radius:11px;
+	-moz-border-radius-bottomright:11px;
+	border-bottom-right-radius:11px;
+	-webkit-border-bottom-left-radius:11px;
+	-moz-border-radius-bottomleft:11px;
+	border-bottom-left-radius:11px;
+	text-indent:0;
+	border:1px solid #d83526;
+	display:inline-block;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:15px;
+	font-weight:bold;
+	font-style:normal;
+	height:25px;
+	line-height:28px;
+	width:150px;
+	text-decoration:none;
+	text-align:center;
+	text-shadow:1px 1px 0px #b23e35;
+}
+
+/*TODO modificar para los puntos envido*/
+.botonpuntos {
+	-moz-box-shadow:inset 0px 1px 0px 0px #f29c93;
+	-webkit-box-shadow:inset 0px 1px 0px 0px #f29c93;
+	box-shadow:inset 0px 1px 0px 0px #f29c93;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #fe1a00), color-stop(1, #ce0100) );
+	background:-moz-linear-gradient( center top, #fe1a00 5%, #ce0100 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fe1a00', endColorstr='#ce0100');
+	background-color:#fe1a00;
+	-webkit-border-top-left-radius:14px;
+	-moz-border-radius-topleft:14px;
+	border-top-left-radius:14px;
+	-webkit-border-top-right-radius:14px;
+	-moz-border-radius-topright:14px;
+	border-top-right-radius:14px;
+	-webkit-border-bottom-right-radius:14px;
+	-moz-border-radius-bottomright:14px;
+	border-bottom-right-radius:14px;
+	-webkit-border-bottom-left-radius:14px;
+	-moz-border-radius-bottomleft:14px;
+	border-bottom-left-radius:14px;
+	text-indent:0;
+	border:1px solid #d83526;
+	display:inline-block;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:15px;
+	font-style:normal;
+	height:28px;
+	line-height:28px;
+	width:28px;
+	text-decoration:none;
+	text-align:center;
+	text-shadow:1px 1px 0px #b23e35;
+}
+
+.botonpuntos_sonbuenas {
+	-moz-box-shadow:inset 0px 1px 0px 0px #f29c93;
+	-webkit-box-shadow:inset 0px 1px 0px 0px #f29c93;
+	box-shadow:inset 0px 1px 0px 0px #f29c93;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #fe1a00), color-stop(1, #ce0100) );
+	background:-moz-linear-gradient( center top, #fe1a00 5%, #ce0100 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fe1a00', endColorstr='#ce0100');
+	background-color:#fe1a00;
+	-webkit-border-top-left-radius:14px;
+	-moz-border-radius-topleft:14px;
+	border-top-left-radius:14px;
+	-webkit-border-top-right-radius:14px;
+	-moz-border-radius-topright:14px;
+	border-top-right-radius:14px;
+	-webkit-border-bottom-right-radius:14px;
+	-moz-border-radius-bottomright:14px;
+	border-bottom-right-radius:14px;
+	-webkit-border-bottom-left-radius:14px;
+	-moz-border-radius-bottomleft:14px;
+	border-bottom-left-radius:14px;
+	text-indent:0;
+	border:1px solid #d83526;
+	display:inline-block;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:15px;
+	font-style:normal;
+	height:28px;
+	line-height:28px;
+	width:80px;
+	text-decoration:none;
+	text-align:center;
+	text-shadow:1px 1px 0px #b23e35;
+}
+
+.botonpartido {
+	-moz-box-shadow:inset 0px 1px 0px 0px #ffffff;
+	-webkit-box-shadow:inset 0px 1px 0px 0px #ffffff;
+	box-shadow:inset 0px 1px 0px 0px #ffffff;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #f9f9f9), color-stop(1, #e9e9e9) );
+	background:-moz-linear-gradient( center top, #f9f9f9 5%, #e9e9e9 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#f9f9f9', endColorstr='#e9e9e9');
+	background-color:#f9f9f9;
+	-webkit-border-top-left-radius:11px;
+	-moz-border-radius-topleft:11px;
+	border-top-left-radius:11px;
+	-webkit-border-top-right-radius:11px;
+	-moz-border-radius-topright:11px;
+	border-top-right-radius:11px;
+	-webkit-border-bottom-right-radius:11px;
+	-moz-border-radius-bottomright:11px;
+	border-bottom-right-radius:11px;
+	-webkit-border-bottom-left-radius:11px;
+	-moz-border-radius-bottomleft:11px;
+	border-bottom-left-radius:11px;
+	text-indent:0;
+	border:1px solid #dcdcdc;
+	display:inline-block;
+	color:#666666;
+	font-family:Arial;
+	font-size:15px;
+	font-weight:bold;
+	font-style:normal;
+	height:25px;
+	line-height:28px;
+	width:150px;
+	text-decoration:none;
+	text-align:center;
+	text-shadow:1px 1px 0px #ffffff;
+}
+
+.boton_mostrar_puntos {
+	-moz-box-shadow:inset 0px 1px 0px 0px #ffffff;
+	-webkit-box-shadow:inset 0px 1px 0px 0px #ffffff;
+	box-shadow:inset 0px 1px 0px 0px #ffffff;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #FFFF00), color-stop(1, #FFFF00) );
+	background:-moz-linear-gradient( center top, #FFFF00 5%, #FFFF00 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#FFFF00', endColorstr='#FFFF00');
+	background-color:#FFFF00;
+	-webkit-border-top-left-radius:11px;
+	-moz-border-radius-topleft:11px;
+	border-top-left-radius:11px;
+	-webkit-border-top-right-radius:11px;
+	-moz-border-radius-topright:11px;
+	border-top-right-radius:11px;
+	-webkit-border-bottom-right-radius:11px;
+	-moz-border-radius-bottomright:11px;
+	border-bottom-right-radius:11px;
+	-webkit-border-bottom-left-radius:11px;
+	-moz-border-radius-bottomleft:11px;
+	border-bottom-left-radius:11px;
+	text-indent:0;
+	border:1px solid #FFFF00;
+	display:inline-block;
+	color:#666666;
+	font-family:Arial;
+	font-size:15px;
+	font-weight:bold;
+	font-style:normal;
+	height:25px;
+	line-height:28px;
+	width:150px;
+	text-decoration:none;
+	text-align:center;
+	text-shadow:1px 1px 0px #ffffff;
+}
+
+
+.texto {
+	text-shadow:1px 0px 10px rgba(255,255,255,1);
+	font-weight:bold;
+	font-variant:small-caps;
+	color:#CF0808;
+	letter-spacing:1pt;
+	word-spacing:1pt;
+	font-size:25px;
+	text-align:center;
+	font-family:courier new, courier, monospace;line-height:0;
+}
+.nombre{
+    color:white;
+    line-height: 0;
+    font-size: 25;
+
+    font-family: sans-serif;
+    text-transform: uppercase;
+    text-shadow:
+    0.5px 0.5px 0 #CCC,
+    1px 1px 0 #444,
+    2px 2px 0 #444,
+    3px 3px 0 #444,
+    4px 4px 0 #444;
+
+}
+
+.tabla-puntos{}
+
+.carta1_1 {
+        z-index: 1;
+        left: 300;
+        top:355;
+    position: absolute;
+    }
+
+.carta1_2 {
+        z-index: 2;
+        left: 340;
+        top:357;
+    position: absolute;
+
+    }
+.carta1_3 {
+        z-index: 3;
+        top:359;
+        left: 380;
+    position: absolute;
+
+    }
+
+.carta2_1 {
+        z-index: 1;
+        left: 600;
+        top:355;
+    position: absolute;
+    }
+
+.carta2_2 {
+        z-index: 2;
+        left: 640;
+        top:357;
+    position: absolute;
+
+    }
+.carta2_3 {
+        z-index: 3;
+        left: center;
+        top:359;
+        left: 680;
+    position: absolute;
+    }
+
+.carta3_1 {
+        z-index: 1;
+        left: 600;
+        top:263;
+    position: absolute;
+    }
+
+.carta3_2 {
+        z-index: 2;
+        left: 640;
+        top:265;
+    position: absolute;
+
+    }
+.carta3_3 {
+        z-index: 3;
+        left: center;
+        top:267;
+        left: 680;
+    position: absolute;
+
+    }
+
+.carta4_1 {
+        z-index: 1;
+        left: 300;
+        top:263;
+    position: absolute;
+    }
+
+.carta4_2 {
+        z-index: 2;
+        left: 340;
+        top:265;
+    position: absolute;
+
+    }
+.carta4_3 {
+        z-index: 3;
+        top:267;
+        left: 380;
+    position: absolute;
+
+    }

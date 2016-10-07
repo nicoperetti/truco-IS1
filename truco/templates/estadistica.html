@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <link rel='stylesheet' type='text/css' href="{{ STATIC_URL }}shift.css" />   
+        <link rel='stylesheet' type='text/css' href="{{ STATIC_URL }}base.css" />   
+    </head>
+        <body>
+         <center>
+            <div id="logo">
+                <img src="{{ STATIC_URL }}logo.png" height="180">
+            </div>
+         </center>
+    <div class="base">
+
+    </div>
+        <center>
+            {% block content %}
+            </div>
+        {% for i in usuarios %}
+          <tr>
+<!--            <th class="tg-031e" width=300><a href="/estadistica" class="botonpartido">estadistica</a></th>-->
+            <th class="tg-031e"><h1 class="tableta2">{{ i.usuario }}</h1></th>
+            <th class="tg-031e"><h1 class="tableta2">{{i.cantidad_partidas_ganadas}}</h1></th>
+          </tr>
+        {% endfor %}
+            {% endblock %}
+        <center>
+        </body>
+</html>

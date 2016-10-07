@@ -1,0 +1,22 @@
+body {
+    background-image: url('fondo.png');
+    background-size: 100% ;
+}
+.base {
+  color: white;
+  font: status-bar; 
+  font-family: fantasy; 
+  font-size: 40pt;
+}
+
+.texto {
+	text-shadow:1px 0px 10px rgba(255,255,255,1);
+	font-weight:bold;
+	font-variant:small-caps;
+	color:#CF0808;
+	letter-spacing:2pt;
+	word-spacing:4pt;
+	font-size:20px;
+	text-align:left;
+	font-family:courier new, courier, monospace;line-height:0;
+}
